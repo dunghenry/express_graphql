@@ -11,6 +11,8 @@ import http from 'http';
 import helmet from 'helmet';
 import typeDefs from './schemas/schema';
 import resolvers from './resolvers/resolvers';
+import connectDB from './configs/connect.db';
+import mongoDataMethods from './data/dataDB';
 const port: IPort = Number(process.env.PORT!) || 4000;
 const app: Application = express();
 app.use(express.json());
@@ -31,7 +33,14 @@ app.get<{}, { message: string }, {}, {}>('/', (req, res) => {
 });
 (async () => {
     await server.start();
-    app.use(expressMiddleware(server));
-    await new Promise((resolve: any) => httpServer.listen({ port: 4000 }, resolve));
-    console.log(`🚀 Server ready at http://localhost:4000`);
+    app.use(
+        expressMiddleware(server, {
+            context: async () => ({
+                mongoDataMethods,
+            }),
+        }),
+    );
+    connectDB();
+    await new Promise((resolve: any) => httpServer.listen({ port }, resolve));
+    console.log(`🚀 Server ready at http://localhost:${port}`);
 })();
